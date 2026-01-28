@@ -1,0 +1,1153 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>لعبة تطابق البطاقات | Memory Match</title>
+  <style>
+    :root{
+      --bg1:#0b1020;
+      --bg2:#101a3a;
+      --card:#0f1835cc;
+      --glass:#ffffff12;
+      --txt:#eef3ff;
+      --muted:#b8c2ffcc;
+      --accent:#7c5cff;
+      --accent2:#22c55e;
+      --accent3:#ff4d6d;
+      --warn:#fbbf24;
+      --shadow: 0 18px 60px rgba(0,0,0,.35);
+      --radius: 18px;
+      --radius2: 24px;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Noto Sans Arabic", Tahoma, Arial;
+      color:var(--txt);
+      background:
+        radial-gradient(1200px 600px at 15% 20%, rgba(124,92,255,.35), transparent 60%),
+        radial-gradient(900px 500px at 85% 25%, rgba(34,197,94,.25), transparent 55%),
+        radial-gradient(900px 600px at 55% 90%, rgba(255,77,109,.18), transparent 55%),
+        linear-gradient(160deg, var(--bg1), var(--bg2));
+      display:flex;
+      justify-content:center;
+      padding: 18px;
+    }
+
+    .app{
+      width:min(1100px, 100%);
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+      padding-bottom: 90px; /* space for fixed footer */
+    }
+
+    .topbar{
+      display:flex;
+      flex-wrap:wrap;
+      gap:12px;
+      align-items:center;
+      justify-content:space-between;
+      padding: 14px 16px;
+      border-radius: var(--radius2);
+      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.05));
+      border:1px solid rgba(255,255,255,.12);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .brand{
+      display:flex; align-items:center; gap:12px;
+      min-width: 240px;
+    }
+    .logo{
+      width:44px;height:44px;border-radius:14px;
+      background:
+        radial-gradient(18px 18px at 30% 30%, rgba(255,255,255,.35), transparent 60%),
+        linear-gradient(135deg, var(--accent), #3aa0ff);
+      box-shadow: 0 16px 35px rgba(124,92,255,.35);
+      display:grid;place-items:center;
+      border:1px solid rgba(255,255,255,.18);
+    }
+    .logo svg{filter: drop-shadow(0 6px 18px rgba(0,0,0,.25))}
+    .brand h1{
+      margin:0;
+      font-size: 18px;
+      line-height: 1.2;
+      letter-spacing:.2px;
+    }
+    .brand p{
+      margin:2px 0 0;
+      color:var(--muted);
+      font-size: 12px;
+    }
+
+    .controls{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+      justify-content:flex-end;
+      min-width: 260px;
+    }
+
+    .chip{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      padding: 10px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.07);
+      border: 1px solid rgba(255,255,255,.10);
+      color: var(--txt);
+      font-size: 13px;
+      white-space:nowrap;
+    }
+    .chip b{font-weight:700}
+    .dot{
+      width:10px;height:10px;border-radius:50%;
+      background: var(--accent2);
+      box-shadow: 0 0 0 4px rgba(34,197,94,.16);
+    }
+    .dot.p2{background: var(--accent); box-shadow: 0 0 0 4px rgba(124,92,255,.16);}
+    .dot.warn{background: var(--warn); box-shadow: 0 0 0 4px rgba(251,191,36,.16);}
+
+    .btn{
+      appearance:none;
+      border:none;
+      cursor:pointer;
+      padding: 10px 14px;
+      border-radius: 14px;
+      color: var(--txt);
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.14);
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      font-weight: 700;
+      display:inline-flex; gap:10px; align-items:center;
+    }
+    .btn:hover{transform: translateY(-1px); background: rgba(255,255,255,.11);}
+    .btn:active{transform: translateY(0px) scale(.99);}
+    .btn.primary{
+      background: linear-gradient(135deg, var(--accent), #3aa0ff);
+      border-color: rgba(255,255,255,.18);
+      box-shadow: 0 18px 40px rgba(124,92,255,.28);
+    }
+    .btn.danger{
+      background: linear-gradient(135deg, var(--accent3), #ff9a2a);
+      border-color: rgba(255,255,255,.18);
+      box-shadow: 0 18px 40px rgba(255,77,109,.18);
+    }
+
+    .main{
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap:14px;
+      align-items:start;
+    }
+
+    @media (max-width: 900px){
+      .main{grid-template-columns: 1fr; }
+      .brand{min-width:auto}
+      .controls{min-width:auto; justify-content:flex-start}
+    }
+
+    .panel{
+      border-radius: var(--radius2);
+      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.05));
+      border:1px solid rgba(255,255,255,.12);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      overflow:hidden;
+    }
+
+    .panelHeader{
+      padding: 14px 16px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      border-bottom: 1px solid rgba(255,255,255,.10);
+      background: linear-gradient(180deg, rgba(255,255,255,.08), transparent);
+    }
+    .panelHeader h2{
+      margin:0;
+      font-size: 15px;
+      letter-spacing:.2px;
+    }
+    .panelHeader small{
+      color: var(--muted);
+      font-weight:600;
+    }
+
+    .boardWrap{
+      padding: 16px;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    @media (max-width: 520px){
+      .grid{gap:10px}
+    }
+
+    .card{
+      position:relative;
+      width:100%;
+      aspect-ratio: 1 / 1;
+      border-radius: 18px;
+      perspective: 900px;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .cardInner{
+      position:absolute; inset:0;
+      border-radius: 18px;
+      transition: transform .5s cubic-bezier(.2,.9,.2,1), box-shadow .25s ease;
+      transform-style: preserve-3d;
+      box-shadow: 0 14px 40px rgba(0,0,0,.25);
+    }
+
+    .card.flipped .cardInner{ transform: rotateY(180deg); }
+    .card.matched .cardInner{
+      box-shadow: 0 18px 55px rgba(34,197,94,.18);
+      outline: 2px solid rgba(34,197,94,.45);
+    }
+
+    .face{
+      position:absolute; inset:0;
+      backface-visibility:hidden;
+      border-radius: 18px;
+      display:grid;
+      place-items:center;
+      font-size: clamp(22px, 5vw, 34px);
+      border: 1px solid rgba(255,255,255,.12);
+      overflow:hidden;
+    }
+    .front{
+      transform: rotateY(180deg);
+      background:
+        radial-gradient(260px 160px at 30% 25%, rgba(255,255,255,.18), transparent 60%),
+        linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+    }
+    .back{
+      background:
+        radial-gradient(140px 90px at 20% 25%, rgba(255,255,255,.18), transparent 70%),
+        linear-gradient(135deg, rgba(124,92,255,.35), rgba(34,197,94,.18));
+    }
+    .backIcon{
+      width:44px;height:44px;border-radius: 16px;
+      display:grid; place-items:center;
+      background: rgba(0,0,0,.15);
+      border: 1px solid rgba(255,255,255,.14);
+    }
+
+    .sidebar{
+      padding: 16px;
+      display:flex;
+      flex-direction:column;
+      gap: 12px;
+    }
+
+    .stats{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .stat{
+      padding: 12px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.10);
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .stat .label{color:var(--muted); font-size: 12px; font-weight:700;}
+    .stat .value{font-size: 18px; font-weight:900;}
+
+    .turnBox{
+      padding: 12px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.10);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+
+    .turnName{
+      display:flex; align-items:center; gap:10px;
+      font-weight:900;
+    }
+    .badge{
+      font-size: 12px;
+      font-weight: 900;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.15);
+      color: var(--muted);
+      white-space:nowrap;
+    }
+
+    .hint{
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.6;
+      padding: 12px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.05);
+      border: 1px dashed rgba(255,255,255,.16);
+    }
+
+    .toast{
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      right: 16px;
+      margin: 0 auto;
+      width: min(720px, calc(100% - 32px));
+      z-index: 30;
+      display:flex;
+      justify-content:center;
+      pointer-events:none;
+    }
+    .toast .bubble{
+      pointer-events:auto;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(15, 24, 53, .82);
+      border: 1px solid rgba(255,255,255,.14);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      color: var(--txt);
+      font-weight: 800;
+      display:flex;
+      gap:10px;
+      align-items:center;
+      transform: translateY(-8px);
+      opacity: 0;
+      transition: opacity .2s ease, transform .2s ease;
+    }
+    .toast.show .bubble{
+      opacity: 1;
+      transform: translateY(0px);
+    }
+
+    /* Modal (Start Screen) */
+    .overlay{
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding: 18px;
+      background: radial-gradient(900px 600px at 50% 35%, rgba(124,92,255,.25), rgba(0,0,0,.65));
+      backdrop-filter: blur(6px);
+    }
+    .modal{
+      width: min(900px, 100%);
+      border-radius: 26px;
+      background: linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.06));
+      border: 1px solid rgba(255,255,255,.16);
+      box-shadow: 0 30px 90px rgba(0,0,0,.55);
+      overflow:hidden;
+    }
+    .modalHeader{
+      padding: 18px 18px 14px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+      border-bottom: 1px solid rgba(255,255,255,.12);
+      background: linear-gradient(180deg, rgba(255,255,255,.10), transparent);
+    }
+    .modalHeader h2{margin:0; font-size: 18px;}
+    .modalHeader p{margin:4px 0 0; color:var(--muted); font-weight:600; font-size: 13px;}
+    .modalBody{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      padding: 16px 18px 18px;
+    }
+    @media (max-width: 860px){
+      .modalBody{grid-template-columns:1fr}
+    }
+
+    .cardBox{
+      border-radius: 22px;
+      background: rgba(0,0,0,.18);
+      border: 1px solid rgba(255,255,255,.12);
+      padding: 14px;
+    }
+
+    .row{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    @media (max-width: 520px){
+      .row{grid-template-columns:1fr}
+    }
+
+    label{
+      display:block;
+      color: var(--muted);
+      font-weight: 800;
+      font-size: 12px;
+      margin-bottom: 6px;
+    }
+    input[type="text"]{
+      width:100%;
+      padding: 12px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      color: var(--txt);
+      outline:none;
+      font-weight: 800;
+      transition: border-color .12s ease, background .12s ease;
+    }
+    input[type="text"]:focus{
+      border-color: rgba(124,92,255,.65);
+      background: rgba(255,255,255,.09);
+    }
+
+    .seg{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top: 8px;
+    }
+    .seg button{
+      flex: 1;
+      min-width: 160px;
+      padding: 12px 12px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      color: var(--txt);
+      cursor:pointer;
+      font-weight: 900;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+    }
+    .seg button:hover{transform: translateY(-1px); background: rgba(255,255,255,.09);}
+    .seg button.active{
+      background: linear-gradient(135deg, rgba(124,92,255,.75), rgba(58,160,255,.35));
+      border-color: rgba(255,255,255,.20);
+      box-shadow: 0 18px 40px rgba(124,92,255,.18);
+    }
+    .seg .mini{color: var(--muted); font-weight: 900; font-size: 12px}
+
+    .actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top: 12px;
+    }
+
+    .rules{
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.7;
+    }
+    .rules ul{margin: 10px 0 0; padding: 0 18px 0 0;}
+    .rules li{margin: 6px 0}
+
+    /* Fixed Footer */
+    .footer{
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 40;
+      padding: 10px 14px;
+      background: rgba(10,16,35,.75);
+      border-top: 1px solid rgba(255,255,255,.12);
+      backdrop-filter: blur(12px);
+    }
+    .footerInner{
+      width:min(1100px, 100%);
+      margin: 0 auto;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .footerInner b{color: var(--txt); font-weight: 900}
+    .sep{opacity:.6}
+    .hidden{display:none !important;}
+  </style>
+</head>
+<body>
+
+  <div class="toast" id="toast">
+    <div class="bubble" id="toastBubble">
+      <span id="toastIcon">✨</span>
+      <span id="toastText">مرحبًا!</span>
+    </div>
+  </div>
+
+  <!-- Start Screen -->
+  <div class="overlay" id="startOverlay" aria-modal="true" role="dialog">
+    <div class="modal">
+      <div class="modalHeader">
+        <div>
+          <h2>🎮 لعبة تطابق البطاقات</h2>
+          <p>واجهة عربية — تصميم حديث — وضع لاعب واحد أو لاعبين</p>
+        </div>
+        <button class="btn" id="demoFillBtn" type="button" title="تعبئة أسماء تجريبية">⚡ تعبئة</button>
+      </div>
+
+      <div class="modalBody">
+        <div class="cardBox">
+          <div class="seg" role="tablist" aria-label="اختيار عدد اللاعبين">
+            <button type="button" class="active" id="mode1Btn" aria-selected="true">
+              <span>لاعب واحد</span>
+              <span class="mini">ضد نفسك (أفضل نتيجة)</span>
+            </button>
+            <button type="button" id="mode2Btn" aria-selected="false">
+              <span>لاعبين</span>
+              <span class="mini">تنافس بالتناوب</span>
+            </button>
+          </div>
+
+          <div class="row" style="margin-top:14px">
+            <div>
+              <label for="p1Name">اسم اللاعب الأول</label>
+              <input id="p1Name" type="text" maxlength="18" placeholder="مثال: فيصل" autocomplete="off" />
+            </div>
+            <div id="p2Wrap" class="hidden">
+              <label for="p2Name">اسم اللاعب الثاني</label>
+              <input id="p2Name" type="text" maxlength="18" placeholder="مثال: أحمد" autocomplete="off" />
+            </div>
+          </div>
+
+          <div class="actions">
+            <button class="btn primary" id="startBtn" type="button">🚀 ابدأ اللعبة</button>
+            <button class="btn danger" id="resetAllBtn" type="button" title="إعادة ضبط كل شيء">🧼 إعادة ضبط</button>
+          </div>
+
+          <p class="rules">
+            <b>طريقة اللعب:</b>
+            اقلب بطاقتين. إذا تطابقت الرموز تحصل على نقطة وتلعب مرة أخرى.
+            إذا لم تتطابق، ينتقل الدور (في وضع اللاعبين).
+          </p>
+        </div>
+
+        <div class="cardBox">
+          <div class="rules">
+            <b>ميزات اللعبة:</b>
+            <ul>
+              <li>تصميم زجاجي حديث متجاوب للهاتف والكمبيوتر.</li>
+              <li>لوحة نتائج + عدّاد وقت + عدّاد محاولات.</li>
+              <li>رسائل تنبيه جميلة عند التطابق/الفوز.</li>
+              <li>إعادة تشغيل سريعة في أي وقت.</li>
+            </ul>
+            <p style="margin-top:12px">
+              <b>ملاحظة:</b> يمكنك تغيير الأسماء ثم بدء لعبة جديدة من داخل اللعبة عبر زر “لعبة جديدة”.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- App -->
+  <div class="app" id="app" aria-live="polite">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2l2.8 5.7L21 9l-4.5 4.3L17.6 20 12 17l-5.6 3 1.1-6.7L3 9l6.2-1.3L12 2z" stroke="white" stroke-width="1.6" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div>
+          <h1>تطابق البطاقات</h1>
+          <p id="subtitle">اختر بطاقتين متطابقتين للفوز</p>
+        </div>
+      </div>
+
+      <div class="controls">
+        <span class="chip" title="وضع اللعب">
+          <span class="dot warn" id="modeDot"></span>
+          <span>الوضع: <b id="modeLabel">—</b></span>
+        </span>
+        <button class="btn" id="newGameBtn" type="button">🆕 لعبة جديدة</button>
+        <button class="btn" id="restartBtn" type="button">🔁 إعادة التشغيل</button>
+      </div>
+    </div>
+
+    <div class="main">
+      <section class="panel" aria-label="لوحة اللعب">
+        <div class="panelHeader">
+          <h2>لوحة البطاقات</h2>
+          <small id="progressText">جاهز!</small>
+        </div>
+        <div class="boardWrap">
+          <div class="grid" id="grid" aria-label="شبكة البطاقات"></div>
+        </div>
+      </section>
+
+      <aside class="panel" aria-label="الإحصائيات">
+        <div class="panelHeader">
+          <h2>الإحصائيات</h2>
+          <small id="bestText">أفضل نتيجة: —</small>
+        </div>
+        <div class="sidebar">
+          <div class="turnBox">
+            <div class="turnName">
+              <span class="dot" id="turnDot"></span>
+              <span id="turnLabel">الدور: —</span>
+            </div>
+            <span class="badge" id="roundBadge">الدور 1</span>
+          </div>
+
+          <div class="stats">
+            <div class="stat">
+              <div class="label">⏱️ الوقت</div>
+              <div class="value" id="timeVal">00:00</div>
+            </div>
+            <div class="stat">
+              <div class="label">🎯 المحاولات</div>
+              <div class="value" id="movesVal">0</div>
+            </div>
+            <div class="stat">
+              <div class="label">✅ التطابقات</div>
+              <div class="value" id="matchesVal">0 / 8</div>
+            </div>
+            <div class="stat">
+              <div class="label">🏆 النقاط</div>
+              <div class="value" id="scoreVal">0 - 0</div>
+            </div>
+          </div>
+
+          <div class="hint" id="hintBox">
+            <b>تلميح سريع:</b><br />
+            حاول تذكر مواقع الرموز — في وضع اللاعبين، التطابق يمنحك نقطة ودور إضافي!
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- Mandatory Fixed Footer -->
+  <footer class="footer" role="contentinfo">
+    <div class="footerInner">
+      <div>Student Name: <b>FAISAL BANDAR BAKHEET ALJOHANI (فيصل بندر بخيت الجهني)</b></div>
+      <div class="sep">|</div>
+      <div>Student ID: <b>446000229</b></div>
+      <div class="sep">|</div>
+      <div>Supervised by: <b>Mohammed Ahmed Jabali</b></div>
+    </div>
+  </footer>
+
+  <script>
+    // ========= Utilities =========
+    const $ = (sel, root=document) => root.querySelector(sel);
+    const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+
+    function shuffle(arr){
+      const a = arr.slice();
+      for(let i=a.length-1; i>0; i--){
+        const j = Math.floor(Math.random()*(i+1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function pad2(n){ return String(n).padStart(2,'0'); }
+    function fmtTime(seconds){
+      const m = Math.floor(seconds / 60);
+      const s = seconds % 60;
+      return `${pad2(m)}:${pad2(s)}`;
+    }
+
+    function safeName(name, fallback){
+      const n = (name || "").trim();
+      return n.length ? n : fallback;
+    }
+
+    // ========= Toast =========
+    let toastTimer = null;
+    function toast(msg, icon="✨"){
+      const t = $("#toast");
+      $("#toastText").textContent = msg;
+      $("#toastIcon").textContent = icon;
+      t.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(()=> t.classList.remove("show"), 1700);
+    }
+
+    // ========= Game State =========
+    const EMOJIS = ["🍓","🍉","🍋","🍇","🍒","🍍","🥝","🍑"]; // 8 pairs => 16 cards
+    const PAIRS = EMOJIS.length;
+    const TOTAL = PAIRS * 2;
+
+    const state = {
+      mode: 1,               // 1 or 2
+      players: ["لاعب 1", "لاعب 2"],
+      scores: [0,0],
+      turn: 0,               // 0 or 1
+      round: 1,
+      moves: 0,
+      matches: 0,
+      started: false,
+      lock: false,
+      first: null,
+      second: null,
+      timer: 0,
+      tickHandle: null,
+      bestSingle: null,      // {moves, time}
+      deck: []               // array of {id, emoji, matched}
+    };
+
+    // ========= DOM =========
+    const startOverlay = $("#startOverlay");
+    const mode1Btn = $("#mode1Btn");
+    const mode2Btn = $("#mode2Btn");
+    const p1Name = $("#p1Name");
+    const p2Wrap = $("#p2Wrap");
+    const p2Name = $("#p2Name");
+    const startBtn = $("#startBtn");
+    const resetAllBtn = $("#resetAllBtn");
+    const demoFillBtn = $("#demoFillBtn");
+
+    const grid = $("#grid");
+    const modeLabel = $("#modeLabel");
+    const modeDot = $("#modeDot");
+    const subtitle = $("#subtitle");
+    const progressText = $("#progressText");
+
+    const newGameBtn = $("#newGameBtn");
+    const restartBtn = $("#restartBtn");
+
+    const turnLabel = $("#turnLabel");
+    const turnDot = $("#turnDot");
+    const roundBadge = $("#roundBadge");
+
+    const timeVal = $("#timeVal");
+    const movesVal = $("#movesVal");
+    const matchesVal = $("#matchesVal");
+    const scoreVal = $("#scoreVal");
+    const bestText = $("#bestText");
+    const hintBox = $("#hintBox");
+
+    // ========= Persistence =========
+    const LS_KEY = "memory_match_ar_v1_best";
+    function loadBest(){
+      try{
+        const raw = localStorage.getItem(LS_KEY);
+        if(!raw) return null;
+        const obj = JSON.parse(raw);
+        if(typeof obj?.moves === "number" && typeof obj?.time === "number") return obj;
+      }catch(e){}
+      return null;
+    }
+    function saveBest(best){
+      try{ localStorage.setItem(LS_KEY, JSON.stringify(best)); }catch(e){}
+    }
+
+    // ========= Setup UI =========
+    function setMode(m){
+      state.mode = m;
+      mode1Btn.classList.toggle("active", m===1);
+      mode2Btn.classList.toggle("active", m===2);
+      mode1Btn.setAttribute("aria-selected", String(m===1));
+      mode2Btn.setAttribute("aria-selected", String(m===2));
+      p2Wrap.classList.toggle("hidden", m===1);
+
+      // topbar mode label
+      if(m===1){
+        modeLabel.textContent = "لاعب واحد";
+        subtitle.textContent = "حقق أفضل نتيجة: أقل محاولات وأقل وقت";
+        modeDot.className = "dot warn";
+      }else{
+        modeLabel.textContent = "لاعبين";
+        subtitle.textContent = "تناوبوا الأدوار — التطابق يمنح نقطة ودور إضافي";
+        modeDot.className = "dot p2";
+      }
+      renderBest();
+    }
+
+    function renderBest(){
+      if(state.mode !== 1){
+        bestText.textContent = "أفضل نتيجة: —";
+        return;
+      }
+      const b = state.bestSingle;
+      if(!b){
+        bestText.textContent = "أفضل نتيجة: —";
+      }else{
+        bestText.textContent = `أفضل نتيجة: ${b.moves} محاولة · ${fmtTime(b.time)}`;
+      }
+    }
+
+    function resetStats(){
+      state.scores = [0,0];
+      state.turn = 0;
+      state.round = 1;
+      state.moves = 0;
+      state.matches = 0;
+      state.first = null;
+      state.second = null;
+      state.lock = false;
+      state.timer = 0;
+      timeVal.textContent = fmtTime(0);
+      movesVal.textContent = "0";
+      matchesVal.textContent = `0 / ${PAIRS}`;
+      scoreVal.textContent = "0 - 0";
+      progressText.textContent = "ابدأ بقلب بطاقة!";
+      updateTurnUI();
+    }
+
+    function updateTurnUI(){
+      if(state.mode === 1){
+        turnLabel.textContent = `اللاعب: ${state.players[0]}`;
+        turnDot.className = "dot warn";
+        roundBadge.textContent = "وضع فردي";
+      }else{
+        turnLabel.textContent = `الدور: ${state.players[state.turn]}`;
+        turnDot.className = state.turn === 0 ? "dot" : "dot p2";
+        roundBadge.textContent = `الدور ${state.round}`;
+      }
+      scoreVal.textContent = `${state.scores[0]} - ${state.scores[1]}`;
+      movesVal.textContent = String(state.moves);
+      matchesVal.textContent = `${state.matches} / ${PAIRS}`;
+    }
+
+    function startTimer(){
+      stopTimer();
+      state.tickHandle = setInterval(()=>{
+        state.timer += 1;
+        timeVal.textContent = fmtTime(state.timer);
+      }, 1000);
+    }
+    function stopTimer(){
+      if(state.tickHandle){
+        clearInterval(state.tickHandle);
+        state.tickHandle = null;
+      }
+    }
+
+    function buildDeck(){
+      const pairs = EMOJIS.flatMap((e, idx)=> ([
+        { id: `${idx}-a`, emoji: e, matched:false },
+        { id: `${idx}-b`, emoji: e, matched:false }
+      ]));
+      state.deck = shuffle(pairs);
+    }
+
+    function renderBoard(){
+      grid.innerHTML = "";
+      state.deck.forEach((card, index)=>{
+        const el = document.createElement("button");
+        el.type = "button";
+        el.className = "card";
+        el.setAttribute("aria-label", "بطاقة");
+        el.dataset.index = String(index);
+
+        el.innerHTML = `
+          <div class="cardInner">
+            <div class="face back" aria-hidden="true">
+              <div class="backIcon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                  <path d="M7 12h10M12 7v10" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </div>
+            </div>
+            <div class="face front" aria-hidden="true">
+              <div style="font-size: clamp(24px, 6vw, 40px); line-height:1">${card.emoji}</div>
+            </div>
+          </div>
+        `;
+        el.addEventListener("click", onCardClick);
+        grid.appendChild(el);
+      });
+    }
+
+    function flip(index, on=true){
+      const el = grid.querySelector(`[data-index="${index}"]`);
+      if(!el) return;
+      el.classList.toggle("flipped", on);
+    }
+
+    function setMatched(index, on=true){
+      const el = grid.querySelector(`[data-index="${index}"]`);
+      if(!el) return;
+      el.classList.toggle("matched", on);
+      el.disabled = on;
+    }
+
+    function disableAll(disabled=true){
+      $$(".card", grid).forEach(btn => btn.disabled = disabled);
+    }
+
+    function softResetFlips(){
+      // flip back any non-matched currently flipped
+      $$(".card.flipped", grid).forEach(btn=>{
+        const idx = Number(btn.dataset.index);
+        if(!state.deck[idx].matched){
+          btn.classList.remove("flipped");
+        }
+      });
+      state.first = null;
+      state.second = null;
+      state.lock = false;
+    }
+
+    // ========= Gameplay =========
+    function beginGame(){
+      // names
+      const n1 = safeName(p1Name.value, "لاعب 1");
+      const n2 = safeName(p2Name.value, "لاعب 2");
+      state.players = [n1, n2];
+
+      // best
+      state.bestSingle = loadBest();
+      renderBest();
+
+      // start
+      buildDeck();
+      renderBoard();
+      resetStats();
+
+      // show UI
+      startOverlay.classList.add("hidden");
+      state.started = true;
+
+      toast("بالتوفيق! ابدأ بقلب بطاقة", "🎮");
+      startTimer();
+      updateTurnUI();
+
+      hintBox.innerHTML = `<b>تلميح سريع:</b><br />${state.mode===1
+        ? "حاول إنهاء اللعبة بأقل عدد محاولات وأقل وقت لتحطيم أفضل نتيجة!"
+        : "في وضع اللاعبين: التطابق يمنحك نقطة ودور إضافي. ركّز على الذاكرة!"
+      }`;
+    }
+
+    function onCardClick(e){
+      const btn = e.currentTarget;
+      const idx = Number(btn.dataset.index);
+      const card = state.deck[idx];
+
+      if(state.lock) return;
+      if(card.matched) return;
+
+      // prevent double-click same card
+      if(state.first === idx) return;
+
+      flip(idx, true);
+
+      if(state.first === null){
+        state.first = idx;
+        progressText.textContent = "اختر بطاقة ثانية...";
+        return;
+      }
+
+      // second pick
+      state.second = idx;
+      state.lock = true;
+      state.moves += 1;
+      updateTurnUI();
+
+      const a = state.deck[state.first];
+      const b = state.deck[state.second];
+
+      if(a.emoji === b.emoji){
+        // match
+        a.matched = true;
+        b.matched = true;
+        setMatched(state.first, true);
+        setMatched(state.second, true);
+        state.matches += 1;
+
+        // scoring
+        if(state.mode === 2){
+          state.scores[state.turn] += 1; // point and keep turn
+          toast(`تطابق ممتاز! نقطة لـ ${state.players[state.turn]}`, "✅");
+        }else{
+          toast("تطابق ممتاز!", "✅");
+        }
+
+        progressText.textContent = `تطابق! بقي ${PAIRS - state.matches} زوج`;
+        updateTurnUI();
+
+        state.first = null;
+        state.second = null;
+        state.lock = false;
+
+        // win?
+        if(state.matches === PAIRS){
+          endGame();
+        }
+        return;
+      }
+
+      // not match
+      progressText.textContent = "لم تتطابق... سيتم إرجاع البطاقات";
+      toast("لم تتطابق 😅", "❌");
+
+      // switch turn for 2P
+      const prevTurn = state.turn;
+      if(state.mode === 2){
+        state.turn = state.turn === 0 ? 1 : 0;
+        state.round += 1;
+      }
+
+      setTimeout(()=>{
+        flip(state.first, false);
+        flip(state.second, false);
+        state.first = null;
+        state.second = null;
+        state.lock = false;
+        updateTurnUI();
+
+        if(state.mode === 2 && prevTurn !== state.turn){
+          progressText.textContent = `الدور الآن لـ ${state.players[state.turn]}`;
+        }else{
+          progressText.textContent = "جرّب مرة أخرى!";
+        }
+      }, 700);
+    }
+
+    function endGame(){
+      stopTimer();
+      disableAll(true);
+
+      // best (single)
+      if(state.mode === 1){
+        const current = { moves: state.moves, time: state.timer };
+        const best = state.bestSingle;
+
+        const isBetter = !best
+          || current.moves < best.moves
+          || (current.moves === best.moves && current.time < best.time);
+
+        if(isBetter){
+          state.bestSingle = current;
+          saveBest(current);
+          renderBest();
+          toast("🥇 أفضل نتيجة جديدة! رائع!", "🏆");
+        }else{
+          toast("انتهت اللعبة! أحسنت 👏", "🏁");
+        }
+
+        progressText.textContent = `انتهت اللعبة! نتيجتك: ${state.moves} محاولة · ${fmtTime(state.timer)}`;
+        return;
+      }
+
+      // 2 players result
+      const [s1, s2] = state.scores;
+      let msg = "";
+      if(s1 > s2) msg = `الفائز: ${state.players[0]} 🏆`;
+      else if(s2 > s1) msg = `الفائز: ${state.players[1]} 🏆`;
+      else msg = "تعادل! 🤝";
+
+      progressText.textContent = `انتهت اللعبة! ${msg} (النتيجة ${s1} - ${s2})`;
+      toast(`انتهت اللعبة! ${msg}`, "🏁");
+    }
+
+    function restartSameNames(){
+      if(!state.started) return;
+      buildDeck();
+      renderBoard();
+      resetStats();
+      disableAll(false);
+      toast("تمت إعادة التشغيل", "🔁");
+      startTimer();
+    }
+
+    function newGameChangeNames(){
+      stopTimer();
+      // reset overlay but keep mode selection
+      startOverlay.classList.remove("hidden");
+      disableAll(true);
+      softResetFlips();
+      progressText.textContent = "جاهز!";
+      timeVal.textContent = "00:00";
+      movesVal.textContent = "0";
+      matchesVal.textContent = `0 / ${PAIRS}`;
+      scoreVal.textContent = "0 - 0";
+      turnLabel.textContent = "الدور: —";
+      roundBadge.textContent = "—";
+      modeLabel.textContent = state.mode === 1 ? "لاعب واحد" : "لاعبين";
+      toast("اختر الأسماء ثم ابدأ لعبة جديدة", "🆕");
+    }
+
+    function hardResetAll(){
+      stopTimer();
+      try{ localStorage.removeItem(LS_KEY); }catch(e){}
+      state.bestSingle = null;
+      p1Name.value = "";
+      p2Name.value = "";
+      setMode(state.mode);
+      toast("تمت إعادة الضبط بالكامل", "🧼");
+    }
+
+    // ========= Events =========
+    mode1Btn.addEventListener("click", ()=> setMode(1));
+    mode2Btn.addEventListener("click", ()=> setMode(2));
+
+    startBtn.addEventListener("click", ()=>{
+      // validate names lightly
+      const n1 = safeName(p1Name.value, "");
+      const n2 = safeName(p2Name.value, "");
+      if(!n1){
+        toast("اكتب اسم اللاعب الأول", "📝");
+        p1Name.focus();
+        return;
+      }
+      if(state.mode === 2 && !n2){
+        toast("اكتب اسم اللاعب الثاني", "📝");
+        p2Name.focus();
+        return;
+      }
+      beginGame();
+    });
+
+    newGameBtn.addEventListener("click", newGameChangeNames);
+    restartBtn.addEventListener("click", restartSameNames);
+
+    resetAllBtn.addEventListener("click", hardResetAll);
+    demoFillBtn.addEventListener("click", ()=>{
+      p1Name.value = "فيصل";
+      p2Name.value = "أحمد";
+      toast("تمت تعبئة أسماء تجريبية", "⚡");
+    });
+
+    // ========= Init =========
+    (function init(){
+      state.bestSingle = loadBest();
+      setMode(1);
+      renderBest();
+
+      // prebuild a board (disabled until start)
+      buildDeck();
+      renderBoard();
+      disableAll(true);
+      progressText.textContent = "ابدأ من شاشة البداية";
+      $("#app").setAttribute("aria-hidden", "false");
+    })();
+  </script>
+</body>
+</html>
